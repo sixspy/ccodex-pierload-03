@@ -122,8 +122,19 @@ def close_overload(body: OverloadCloseIn, authorization: AuthHeader = None):
                        WHERE id=?""",
                     (now, hold["ticket_id"]),
                 )
+            # 旁路闭环不触碰任何快照：影子草稿零改，须经封闸写口才可晋升正式
+            drafts = conn.execute(
+                """SELECT COUNT(*) c FROM gate_seals
+                   WHERE ticket_id=? AND status!='已封闸'""",
+                (hold["ticket_id"],),
+            ).fetchone()["c"]
             write_audit(conn, user, "overload_close", hold["hold_key"], {"note": body.note})
             conn.commit()
-            return {"ok": True, "hold_id": body.hold_id, "ticket_adjudicated": not open_left}
+            return {
+                "ok": True,
+                "hold_id": body.hold_id,
+                "ticket_adjudicated": not open_left,
+                "shadow_drafts_kept": drafts,
+            }
         finally:
             release(conn, lock_key, user)

@@ -5,5 +5,12 @@
     "edge_type": "驳载分票",
     "detail": "北港一号超重分流至旁路后重开",
     "created_at": "2026-01-09T15:00:00"
+  },
+  {
+    "from_ticket": "WT-BP-C09",
+    "to_ticket": null,
+    "edge_type": "旁路挂起",
+    "detail": "旁路案丙 BP-C09 超重 3.4t 入旁路，未闭环不得封闸",
+    "created_at": "2026-01-11T07:42:00"
   }
 ]

@@ -80,11 +80,23 @@ def get_ticket(ticket_id: int, authorization: AuthHeader = None):
             "SELECT * FROM gate_releases WHERE ticket_id=? ORDER BY id DESC",
             (ticket_id,),
         ).fetchall()
+        open_bypass = conn.execute(
+            """SELECT id FROM overload_holds WHERE ticket_id=? AND status='开放'
+               LIMIT 1""",
+            (ticket_id,),
+        ).fetchone()
+        formal_seal = conn.execute(
+            """SELECT id FROM gate_seals WHERE ticket_id=? AND status='已封闸'
+               LIMIT 1""",
+            (ticket_id,),
+        ).fetchone()
         return {
             "ticket": data,
             "overload_holds": [dict(h) for h in holds],
             "gate_seals": [dict(s) for s in seals],
             "gate_releases": [dict(r) for r in releases],
+            "open_bypass": open_bypass is not None,
+            "sealed_formal": formal_seal is not None,
         }
 
 

@@ -60,19 +60,24 @@ def _reconcile_bl(conn, bl_code: str) -> dict:
     declared = float(bl["declared_gross_t"])
     matched = validate_bl_match(declared, ticket_sum, tolerance=0.1)
     seal_rows = conn.execute(
-        """SELECT s.seal_ref, s.ticket_generation, t.ticket_code
+        """SELECT s.seal_ref, s.ticket_generation, s.status, t.ticket_code
            FROM gate_seals s JOIN weigh_tickets t ON t.id=s.ticket_id
            WHERE t.bl_ref=?""",
         (bl_code,),
     ).fetchall()
-    proof_ok = matched and len(seal_rows) >= 1
+    # 五页核账同源：只计正式快照；影子快照草稿不得当已封
+    formal_seals = [s for s in seal_rows if s["status"] == "已封闸"]
+    draft_seals = [s for s in seal_rows if s["status"] != "已封闸"]
+    proof_ok = matched and len(formal_seals) >= 1
     return {
         "bl_code": bl_code,
         "declared_gross_t": declared,
         "ticket_sum_t": ticket_sum,
         "balanced": matched,
         "proof_ready": proof_ok,
-        "seal_count": len(seal_rows),
+        "seal_count": len(formal_seals),
+        "formal_seal_count": len(formal_seals),
+        "shadow_draft_count": len(draft_seals),
         "tickets": [dict(t) for t in tickets],
         "seals": [dict(s) for s in seal_rows],
     }
@@ -93,7 +98,13 @@ def proof_ticket(ticket_code: str, authorization: AuthHeader = None):
             "SELECT * FROM bl_manifests WHERE bl_code=?", (ticket["bl_ref"],)
         ).fetchone()
         seal = conn.execute(
-            """SELECT * FROM gate_seals WHERE ticket_id=? ORDER BY id DESC LIMIT 1""",
+            """SELECT * FROM gate_seals WHERE ticket_id=? AND status='已封闸'
+               ORDER BY id DESC LIMIT 1""",
+            (ticket["id"],),
+        ).fetchone()
+        draft = conn.execute(
+            """SELECT id FROM gate_seals WHERE ticket_id=? AND status!='已封闸'
+               ORDER BY id DESC LIMIT 1""",
             (ticket["id"],),
         ).fetchone()
         release = conn.execute(
@@ -115,6 +126,7 @@ def proof_ticket(ticket_code: str, authorization: AuthHeader = None):
             "gross_t": ticket["gross_t"],
             "manifest_matches_bl": manifest_match,
             "has_seal": seal is not None,
+            "shadow_draft": draft is not None,
             "seal_generation": seal["ticket_generation"] if seal else None,
             "released": release is not None,
             "overload_closed": overload_closed,

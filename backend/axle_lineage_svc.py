@@ -40,9 +40,22 @@ def lineage_for_ticket(ticket_id: int, authorization: AuthHeader = None):
                WHERE e.to_ticket_id=?""",
             (ticket_id,),
         ).fetchall()
+        # 同源核账：血缘页对该票的旁路开放判定与封闸/对账一致
+        open_bypass = conn.execute(
+            """SELECT id FROM overload_holds WHERE ticket_id=? AND status='开放'
+               LIMIT 1""",
+            (ticket_id,),
+        ).fetchone()
+        formal_seal = conn.execute(
+            """SELECT id FROM gate_seals WHERE ticket_id=? AND status='已封闸'
+               LIMIT 1""",
+            (ticket_id,),
+        ).fetchone()
         return {
             "outbound": [dict(x) for x in out_edges],
             "inbound": [dict(x) for x in in_edges],
+            "open_bypass": open_bypass is not None,
+            "sealed_formal": formal_seal is not None,
         }
 
 

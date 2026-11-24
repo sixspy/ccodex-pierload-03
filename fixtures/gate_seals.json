@@ -6,5 +6,13 @@
     "manifest": "票号=WT-LN-N-02-IN-001;提单=BL-2026-0104;车牌=鲁H·危3388;毛重=41.0t;闸代=2",
     "status": "已封闸",
     "sealed_at": "2026-01-10T09:00:00"
+  },
+  {
+    "ticket_code": "WT-BP-C09",
+    "seal_ref": "GS-WT-BP-C09-DRAFT1",
+    "ticket_generation": 1,
+    "manifest": "票号=WT-BP-C09;提单=BL-2026-0105;车牌=苏B·丙0909;毛重=52.4t;闸代=1",
+    "status": "影子快照草稿",
+    "sealed_at": "2026-01-11T07:45:00"
   }
 ]

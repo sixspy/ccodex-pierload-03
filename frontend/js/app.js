@@ -85,6 +85,15 @@ createApp({
     const sealableTickets = computed(() =>
       tickets.value.filter((t) => ["已裁定","已放行"].includes(t.status))
     );
+    const openBypassTickets = computed(() =>
+      tickets.value.filter((t) => t.status === "旁路挂起")
+    );
+
+    function sealBadgeClass(status) {
+      if (status === "已封闸") return "pass";
+      if (status === "影子快照草稿") return "warn";
+      return "muted";
+    }
 
     function fmtT(n) {
       if (n == null || n === "") return "—";
@@ -266,7 +275,8 @@ createApp({
       reconOne, reconAllItems, proofOne, reconCode, proofCode,
       bridgeForm, laneForm, ticketForm, overloadOpenForm, gateForm, sealForm,
       blForm, lineageForm, customsForm, craneForm,
-      adjudicableTickets, releasableTickets, sealableTickets,
+      adjudicableTickets, releasableTickets, sealableTickets, openBypassTickets,
+      sealBadgeClass,
       login, logout, refresh,
       fmtT, ticketClass, shortText,
       createBridge, loadBridgeDetail, createLane, createTicket, loadTicketDetail, selectTicket,
